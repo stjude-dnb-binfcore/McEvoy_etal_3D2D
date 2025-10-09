@@ -1,0 +1,83 @@
+# the following parameters are the same across the project and might be needed in more than one module #
+root_dir: "./McEvoy_etal_3D2D" # path to the main dir of the project where GitHub repo lives
+metadata_dir: "./McEvoy_etal_3D2D/data/project-metadata" # path to metadata dir of the project
+metadata_file: "project_metadata_with_historic_data_subset_CCLF.tsv" 
+genome_name: "GRCh38" # define genome reference and versioning
+genome_name_cellranger: "GRCh38"
+PROJECT_NAME: "McEvoy_etal_3D2D"
+PI_NAME: "Michael A. Dyer, PhD"
+TASK_ID: "R-shiny apps"
+PROJECT_LEAD_NAME: "Justina McEvoy, PhD"
+DEPARTMENT: "Developmental Neurobiology"
+LEAD_ANALYSTS: "Antonia Chroni, PhD"
+GROUP_LEAD: "Cody A. Ramirez, PhD"
+CONTACT_EMAIL: "antonia.chroni@stjude.org"
+PIPELINE: "Standard sc-/sn-RNA-Seq Analysis in 10X Genomics data"
+START_DATE: "2025-05-13"
+COMPLETION_DATE: "ONGOING"
+
+#######################################################################################################################################
+# Analysis module: `rshiny-app-cclf-cell-lines`
+#######################################################
+# 01-create-object-cclf-cell-lines.R
+data_dir_EWS: "./Addendum_3D2D_Ewing_sarcoma/sc-rna-seq-snap-Addendum-3D2D-EWS-integrated/analyses/cluster-cell-calling/results/01_cluster_cell_calling_default_multiple" 
+data_dir_NB: "./Addendum_3D2D_Neuroblastoma/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-human-genome/analyses/cluster-cell-calling/results/01_cluster_cell_calling_default_multiple" 
+data_dir_OS: "./Addendum_3D2D_Osteosarcoma/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-integrated/analyses/cluster-cell-calling/results/01_cluster_cell_calling_default_multiple" 
+data_dir_RMS: "./Addendum_3D2D_Rhabdomyosarcoma/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-human-genome/analyses/cluster-cell-calling/results/01_cluster_cell_calling_default_multiple" 
+
+num_dim_filter_object: 30 # set one value for `04_run_filter_object.Rmd`
+num_neighbors_filter_object: 30 # number of neighbors to use in UMAP. For multiple variations, use: [10, 20, 30]
+use_condition_split_filter_object: "YES" # Options: "YES" (default) or "NO", for `04_run_filter_object.Rmd`
+print_pdf_filter_object: "NO" # # Options: "NO" (default ALWAYS), for `04_run_filter_object.Rmd`
+grouping: "orig.ident" # define grouping to use 
+genome_name_upstream: "GRCh38" # Options for the `Genome_Specific_Cell_Cycle_Scoring` function:  Options: (1) human: "GRCh38"; (2) mouse: "GRCm39", "hg19", and "mm10"; and (3) dual index genomes: "DualGRCh38", "DualGRCm39", "Dualmm10", and "Dualhg19".
+Regress_Cell_Cycle_value: "NO" # Options: "YES", "NO", "DIFF", OR "mtDNA". Indicates whether or not to regress for cell cycle and, if so, which method to use and scale data; acceptable values.
+assay_filter_object: "RNA"  # Options: "RNA" (default) or "RNA_SoupX"
+normalize_method: "log_norm" # define method for normalization of counts
+num_pcs: 30 # define number of principal components
+nfeatures_value: 3000 # define number of variable features
+prefix: "lognorm" # create label based on the normalization method used
+condition_value1: "cancer_type" # Use discrete values. Min #conditions per project: 1 and Max #conditions per project: 3. To use for visualization purposes and split UMAPs. Value to be extracted from column name in `project_metadata.tsv` file. 
+condition_value2: "tissue_type" # Use discrete values. Min #conditions per project: 1 and Max #conditions per project: 3. To use for visualization purposes and split UMAPs. Value to be extracted from column name in `project_metadata.tsv` file. 
+condition_value3: "RPMI" # Use discrete values. Min #conditions per project: 1 and Max #conditions per project: 3. To use for visualization purposes and split UMAPs. Value to be extracted from column name in `project_metadata.tsv` file. 
+#PCA_Feature_List_value: transcription.factor.gene.list # set for 04_run_filter_object.Rmd if necessary
+
+# 02-integrative-analysis.Rmd
+use_seurat_integration: "NO" # Options: "YES" or "NO"
+use_harmony_integration: "YES" # Options: "YES" or "NO"
+use_liger_integration: "NO" # Options: "YES" or "NO"
+integration_method: "harmony" # Options: "seurat", "harmony", "inmf"
+num_dim_seurat: 30
+num_dim_seurat_integration: 50
+big_data_value: FALSE # Options: "TRUE" or "FALSE"
+num_dim_harmony: 30
+n_neighbors_value: 20
+variable_value: "ID"
+reference_list_value: NULL
+PCA_Feature_List_value: NULL
+
+# 03-cluster-cell-calling.Rmd
+# AND
+# 04-find-markers.Rmd
+resolution_clustering_module: "default_multiple" # Options: "custom_multiple", "default_multiple" or define value of resolution, e.g., "0.5"
+integration_method_clustering_module: "harmony" # Options:: "seurat", "harmony", "inmf"
+num_dim_clustering_module: 30 
+reduction_value_clustering_module: "harmony" # Options: For seurat: "pca"; For harmony: "harmony"; For liger: "inmf"
+assay_clustering_module: "RNA"  # Options: "RNA" (default) or "RNA_SoupX"
+
+# Initially, we use a list of multiple resolutions and then we run the module again with the single resolution that fits the data best. 
+# If no list is provided, then it will calculate the clusters by the default list.
+# We recommend to run first default and then explore a customized list of resolutions (if these are not provided in the list already).
+# In the latter case, user needs to comment in/out the `resolution_list_default_clustering_module` accordingly.
+resolution_list_clustering_module: NULL # This can be a single or multiple resolutions or NULL (default), e.g., NULL; [0.5]; [0.1, 0.5, 1]
+resolution_list_default_clustering_module: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+algorithm_value_clustering_module: 4 # Leiden algorthim (default)
+
+resolution_find_markers: "default_multiple" # "custom_multiple", "default_multiple" or define value of resolution, e.g., 0.5
+#resolution_list_find_markers: 0.1 # this will be the single resolution that fits the data the best
+#n_value_find_markers: 10 # number of top genes to explore
+
+# 05-generate-rshiny-app.R
+# No manual variable definition is necessary.
+
+#######################################################################################################################################
