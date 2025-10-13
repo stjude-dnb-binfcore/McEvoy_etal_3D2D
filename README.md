@@ -92,13 +92,15 @@ bash run-rshiny-app.sh
 If you use this code or workflow, please cite:
 
 ```
-McEvoy et al., 3D2D (manuscript in preparation/submitted).
+McEvoy et al., Next-Generation Pediatric Cancer Models: Patient-Matched Orthotopic Xenografts, 3D-Organoids, 2D-Primary Cultures, and Cell Lines for Identification of Therapeutic Vulnerabilities in Pediatric Solid Tumors (in prep.).
 ```
 
 ## Code Authors
 
 Antonia Chroni, PhD ([@AntoniaChroni](https://github.com/AntoniaChroni))
+
 Asha Jacob Jannu, PhD ([@ashajacob29](https://github.com/ashajacob29))
+
 Cody A. Ramirez, PhD ([@CodyRamirez](https://github.com/CodyRamirez))
 
 
