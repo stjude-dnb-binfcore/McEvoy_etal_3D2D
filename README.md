@@ -1,7 +1,7 @@
 # McEvoy_etal_3D2D Code Repository
 
 
-This repository contains code, workflows, and supporting materials for the analyses described in McEvoy et al., 3D2D (manuscript in preparation/submitted). 
+This repository contains code, workflows, and supporting materials for the analyses described in `McEvoy et al. (in prep.)`. 
 The repository is designed to promote transparency, reproducibility, and ease of use for collaborators and the broader scientific community.
 
 ## Overview
