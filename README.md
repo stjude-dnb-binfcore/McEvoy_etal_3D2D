@@ -20,12 +20,12 @@ The repository is designed to promote transparency, reproducibility, and ease of
 - Documentation: Detailed README files, and usage instructions to guide users through the analysis steps.
 - Snap pipeline was used for general upstream and downstream analyses of single-cell transcriptomics data for part of the project. For more information, see [Single cell RNA Seq Snap workflow (ScRNASeqSnap)](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap).
 
-### rshiny-app-all-cancer-cohorts module
+### 1. rshiny-app-all-cancer-cohorts module
 
 This analysis module contains a collection of scripts that generates an R-Shiny with 4 tabs for all data types available (patient, PDX, 3D, 2D, CCLF) for the EWS, NB, OS, and RMS cancer types. For more information, see `./analyses/rshiny-app-all-cancer-cohorts/README.md`.
 
 
-### rshiny-app-cclf-cell-lines
+### 2. rshiny-app-cclf-cell-lines module
 
 This analysis module contains a collection of scripts that generates an R-Shiny with 4 tabs for the CCLF cell lines for the EWS, NB, OS, and RMS cancer types. For more information, see `./analyses/rshiny-app-cclf-cell-lines/README.md`.
 
