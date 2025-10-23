@@ -37,34 +37,11 @@ Each cohort was subdivided into three analytical groups:
 2.	Human-genome cohort (patient, 2D, CCLF samples): aligned to GRCh38 and processed using identical QC parameters.
 3.	Integrated cohort: merged from the two above and analyzed jointly after Harmony-based integration.
 
-These results were used in the `rshiny-app-all-cancer-cohorts module` of the project and are deposited in each relative repository available as below:
 
-- Ewing sarcoma
+We provide downstream analysis results in the `./analyses/<module_name>/plots` directories, organized by cohort group. Selected outputs from upstream analyses are also available in `./analyses/upstream-analysis/plots`.
+Please note that analysis modules were run as needed for each cohort, so not every module was executed for every group.
 
-1.	[Dual-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-EWS-dual-genome)
-2.	[Human-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-EWS-human-genome)
-3.	[Integrated cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-EWS-integrated)
-
-- Neuroblastoma
-
-1.	[Dual-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-dual-genome)
-2.	[Human-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-human-genome)
-3.	[Integrated cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-integrated)
-
-- Osteosarcoma
-
-1.	[Dual-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-dual-genome)
-2.	[Human-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-human-genome)
-3.	[Integrated cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-integrated)
-
-
-- Rhabdomyosarcoma
-
-1.	[Dual-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-dual-genome)
-2.	[Human-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-human-genome)
-3.	[Integrated cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-integrated)
-
-
+These results were used in the `rshiny-app-all-cancer-cohorts module` of the project and are deposited in each relative repository as shown in the following table. 
 
 
 | Cancer Type    | Dual-genome Cohort | Human-genome Cohort | Integrated Cohort |
