@@ -41,28 +41,39 @@ These results were used in the `rshiny-app-all-cancer-cohorts module` of the pro
 
 - Ewing sarcoma
 
-1.	Dual-genome cohort (PDX and 3D samples): 
-2.	Human-genome cohort (patient, 2D, CCLF samples): 
-3.	Integrated cohort: 
+1.	[Dual-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-EWS-dual-genome)
+2.	[Human-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-EWS-human-genome)
+3.	[Integrated cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-EWS-integrated)
 
 - Neuroblastoma
 
-1.	Dual-genome cohort (PDX and 3D samples): 
-2.	Human-genome cohort (patient, 2D, CCLF samples): 
-3.	Integrated cohort: 
+1.	[Dual-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-dual-genome)
+2.	[Human-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-human-genome)
+3.	[Integrated cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-integrated)
 
 - Osteosarcoma
 
-1.	Dual-genome cohort (PDX and 3D samples): 
-2.	Human-genome cohort (patient, 2D, CCLF samples): 
-3.	Integrated cohort: 
+1.	[Dual-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-dual-genome)
+2.	[Human-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-human-genome)
+3.	[Integrated cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-integrated)
 
 
 - Rhabdomyosarcoma
 
-1.	Dual-genome cohort (PDX and 3D samples): 
-2.	Human-genome cohort (patient, 2D, CCLF samples): 
-3.	Integrated cohort: 
+1.	[Dual-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-dual-genome)
+2.	[Human-genome cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-human-genome)
+3.	[Integrated cohort](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-integrated)
+
+
+
+
+| Cancer Type    | Dual-genome Cohort | Human-genome Cohort | Integrated Cohort |
+|----------------|--------------------|---------------------|-------------------|
+| Ewing Sarcoma  | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-EWS-dual-genome) | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-EWS-human-genome) | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-EWS-integrated) |
+| Neuroblastoma  | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-dual-genome) | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-human-genome) | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-integrated) |
+| Osteosarcoma   | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-dual-genome) | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-human-genome) | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-integrated) |
+| Rhabdomyosarcoma | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-dual-genome) | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-human-genome) | [Link](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-integrated) |
+
 
 
 ### 2. rshiny-app-cclf-cell-lines module
