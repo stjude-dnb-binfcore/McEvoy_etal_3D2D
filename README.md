@@ -18,7 +18,7 @@ The repository is designed to promote transparency, reproducibility, and ease of
    
 - Reproducibility: Instructions and configuration files for setting up the analysis environment, including Docker/Singularity containers and metadata templates. For more information, see [Snap container](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap/tree/main/run-container).
 - Documentation: Detailed README files, and usage instructions to guide users through the analysis steps.
-- Snap pipeline was used for general upstream and downstream analyses of single-cell transcriptomics data for part of the project. For more information on the pipeline, see [Single cell RNA Seq Snap workflow (ScRNASeqSnap)](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap).
+- [Snap workflow](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap) was used for general upstream and downstream analyses of single-cell transcriptomics data for part of the project, a containerized and reproducible pipeline maintained by the St. Jude Bioinformatics Core. 
 
 
 ### 1. rshiny-app-all-cancer-cohorts module
@@ -29,7 +29,7 @@ These results are publicly available at: http://20.9.52.26/McEvoy_etal_3D2D/
 
 #### Cohort-level and Workflow-standardized Analyses
 
-For multi-tumor cohorts (Ewing sarcoma, neuroblastoma, osteosarcoma, and rhabdomyosarcoma), analyses were executed using the [Snap workflow](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap), a containerized and reproducible pipeline maintained by the St. Jude Bioinformatics Core. All dependencies were configured for R v4.4.0 and Seurat v4.4.0, ensuring full computational reproducibility (see GitHub repository for versioning reports).
+For multi-tumor cohorts (Ewing sarcoma, neuroblastoma, osteosarcoma, and rhabdomyosarcoma), analyses were executed using the [Snap workflow](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap). All dependencies were configured for R v4.4.0 and Seurat v4.4.0, ensuring full computational reproducibility (see GitHub repository for versioning reports).
 
 Each cohort was subdivided into three analytical groups:
 
