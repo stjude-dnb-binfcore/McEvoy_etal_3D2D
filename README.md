@@ -18,18 +18,58 @@ The repository is designed to promote transparency, reproducibility, and ease of
    
 - Reproducibility: Instructions and configuration files for setting up the analysis environment, including Docker/Singularity containers and metadata templates. For more information, see [Snap container](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap/tree/main/run-container).
 - Documentation: Detailed README files, and usage instructions to guide users through the analysis steps.
-- Snap pipeline was used for general upstream and downstream analyses of single-cell transcriptomics data for part of the project. For more information, see [Single cell RNA Seq Snap workflow (ScRNASeqSnap)](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap).
+- Snap pipeline was used for general upstream and downstream analyses of single-cell transcriptomics data for part of the project. For more information on the pipeline, see [Single cell RNA Seq Snap workflow (ScRNASeqSnap)](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap).
+
 
 ### 1. rshiny-app-all-cancer-cohorts module
 
 This analysis module contains a collection of scripts that generates an R-Shiny with 4 tabs for all data types available (patient, PDX, 3D, 2D, CCLF) for the EWS, NB, OS, and RMS cancer types. For more information, see `./analyses/rshiny-app-all-cancer-cohorts/README.md`.
+
+These results are publicly available at: http://20.9.52.26/McEvoy_etal_3D2D/
+
+#### Cohort-level and Workflow-standardized Analyses
+
+For multi-tumor cohorts (Ewing sarcoma, neuroblastoma, osteosarcoma, and rhabdomyosarcoma), analyses were executed using the [Snap workflow](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap), a containerized and reproducible pipeline maintained by the St. Jude Bioinformatics Core. All dependencies were configured for R v4.4.0 and Seurat v4.4.0, ensuring full computational reproducibility (see GitHub repository for versioning reports).
+
+Each cohort was subdivided into three analytical groups:
+
+1.	Dual-genome cohort (PDX and 3D samples): aligned to GRCh38 + GRCm39 and filtered for low-quality and mouse-derived cells.
+2.	Human-genome cohort (patient, 2D, CCLF samples): aligned to GRCh38 and processed using identical QC parameters.
+3.	Integrated cohort: merged from the two above and analyzed jointly after Harmony-based integration.
+
+These results were used in the `rshiny-app-all-cancer-cohorts module` of the project and are deposited in each relative repository available as below:
+
+- Ewing sarcoma
+
+1.	Dual-genome cohort (PDX and 3D samples): 
+2.	Human-genome cohort (patient, 2D, CCLF samples): 
+3.	Integrated cohort: 
+
+- Neuroblastoma
+
+1.	Dual-genome cohort (PDX and 3D samples): 
+2.	Human-genome cohort (patient, 2D, CCLF samples): 
+3.	Integrated cohort: 
+
+- Osteosarcoma
+
+1.	Dual-genome cohort (PDX and 3D samples): 
+2.	Human-genome cohort (patient, 2D, CCLF samples): 
+3.	Integrated cohort: 
+
+
+- Rhabdomyosarcoma
+
+1.	Dual-genome cohort (PDX and 3D samples): 
+2.	Human-genome cohort (patient, 2D, CCLF samples): 
+3.	Integrated cohort: 
 
 
 ### 2. rshiny-app-cclf-cell-lines module
 
 This analysis module contains a collection of scripts that generates an R-Shiny with 4 tabs for the CCLF cell lines for the EWS, NB, OS, and RMS cancer types. For more information, see `./analyses/rshiny-app-cclf-cell-lines/README.md`.
 
- 
+
 ## Getting Started
 
 - Clone this repository to your local machine.
