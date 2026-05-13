@@ -15,7 +15,7 @@ Each module has its own README with inputs, scripts, and how to run it.
 | [rshiny-app-all-cancer-cohorts](analyses/rshiny-app-all-cancer-cohorts/README.md) | Shiny apps combining patient, PDX, 3D, 2D, and **CCLF** data for **EWS, NB, OS, RMS**. |
 | [rshiny-app-cclf-cell-lines](analyses/rshiny-app-cclf-cell-lines/README.md) | Shiny apps focused on **CCLF cell lines** for the same cancer types. |
 
-Upstream processing for parts of this work uses the **[ScRNASeqSnap](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap)** workflow. The Shiny-centric modules assume Snap-style outputs where noted in their READMEs.
+Upstream processing for parts of this work uses the **[ScRNASeqSnap](https://github.com/stjude-dnb-binfcore/sc-rna-seq-snap)** workflow (`rshiny-app-all-cancer-cohorts` and `rshiny-app-cclf-cell-lines`). The Shiny-centric modules assume Snap-style outputs where noted in their READMEs.
 
 ## Other repository contents
 
