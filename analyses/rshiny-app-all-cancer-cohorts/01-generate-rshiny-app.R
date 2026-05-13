@@ -45,15 +45,15 @@ assay <- yaml$assay_filter_object
 annotations_dir <- yaml$annotations_dir_rshiny_app
 annotations_filename <- yaml$annotations_filename_rshiny_app
 reduction_value <- yaml$reduction_value_annotation_module
-
+metadata_list_path <- yaml$metadata_list_path_module
 
 # Set up directories and paths to root_dir and analysis_dir
 analysis_dir <- file.path(root_dir, "analyses") 
 module_dir <- file.path(analysis_dir, "rshiny-app-all-cancer-cohorts") 
-input_dir <- file.path("./3D2D_CCLF") 
+#input_dir <- file.path(metadata_list_path) 
 
 # Input files
-input_file <- file.path(input_dir, "metadata-list.tsv")
+input_file <- file.path(metadata_list_path, "metadata-list.tsv")
 
 
 ########################################################################################################################
