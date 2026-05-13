@@ -1,6 +1,4 @@
-# Pipeline for generating an R shiny app for the project and for all cancer cohorts
-
-This analysis module contains a collection of scripts that generates an R-Shiny with 4 tabs for all data types available (patient, PDX, 3D, 2D, CCLF) for the EWS, NB, OS, and RMS cancer types. For more information, see `./analyses/rshiny-app-all-cancer-cohorts/README.md`.
+# Pipeline for generating an R shiny app for the project
 
 ## Usage
 
@@ -8,7 +6,7 @@ This analysis module contains a collection of scripts that generates an R-Shiny 
 
 Parameters according to the project and analysis strategy will need to be specified in the following scripts:
 - `project_parameters.Config.yaml` located at the `root_dir`.
-- Data and results available upon request.
+
 
 ### Run module on an interactive session on HPC within the container
 
@@ -44,7 +42,6 @@ The structure of this folder is as follows:
 ├── 01-generate-rshiny-app.R
 ├── lsf-script.txt
 ├── README.md
-├── results
 ├── run-rshiny-app.sh
 └── util
 |___└── makeShinyFiles_assay.R

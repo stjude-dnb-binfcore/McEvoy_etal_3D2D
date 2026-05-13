@@ -50,22 +50,27 @@ reduction_value <- yaml$reduction_value_annotation_module
 # Set up directories and paths to root_dir and analysis_dir
 analysis_dir <- file.path(root_dir, "analyses") 
 module_dir <- file.path(analysis_dir, "rshiny-app-all-cancer-cohorts") 
-input_dir <- yaml$metadata_list_path
-
+input_dir <- file.path("./3D2D_CCLF") 
 
 # Input files
-metadata_list_file <- yaml$metadata_list
-input_file <- file.path(input_dir, metadata_list_file)
+input_file <- file.path(input_dir, "metadata-list.tsv")
 
 
 ########################################################################################################################
-# cancer cohort objects dir
-ews_dir <- yaml$ews_dir
-neuroblastoma_dir <- yaml$neuroblastoma_dir
-os_dir <- yaml$os_dir
-rhabdo_dir <- yaml$rhabdo_dir
+# cancer cohort objects
+ews_dir <- yaml$EWS_data_dir_app_all
+ews_dir 
 
+neuroblastoma_dir <- yaml$NB_data_dir_app_all
+neuroblastoma_dir
+
+os_dir <- yaml$OS_data_dir_app_all
+os_dir
+
+rhabdo_dir <- yaml$RMS_data_dir_app_all
+rhabdo_dir
 ########################################################################################################################
+
 # Create results_dir
 results_dir <- file.path(module_dir, "results")
 if (!dir.exists(results_dir)) {
@@ -159,6 +164,8 @@ for (i in seq_along(cancer_names)) {
   
   # Create shiny config
   cat("Beginning to process R Shiny for", cancer, "\n")
+  #scConf1 <- createConfig(seu1[[cancer]])
+  
   # Metadata columns can be dropped is if they have more than 50 different possible values for the column. 
   # This cutoff is set in the createConfig step by the maxLevels parameter. 
   # https://rdrr.io/github/SGDDNB/ShinyCell/man/createConfig.html
