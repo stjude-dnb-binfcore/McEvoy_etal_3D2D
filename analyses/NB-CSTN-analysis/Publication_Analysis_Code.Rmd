@@ -1,0 +1,214 @@
+---
+title: "CSTN_NB"
+author: "Cody Ramirez"
+date: "11/13/2024"
+output: html_document
+---
+
+
+
+
+
+```{r}
+results_path <- paste(full_path, "/3_analyzed_results/", sep = "")
+
+set.seed(1234)
+
+Publication_project_metadata <- read.csv(paste0(full_path, "/Publication_project_metadata.tsv"), sep = "\t")
+Publication_NB_cell_type_markers <- read.csv(paste0(full_path, "/Publication_NB_cell_type_markers.tsv"), sep = "\t")
+
+############################################################################################################
+###### Custom function to regress out mitochondria data to help integrate sc/sn data better
+############################################################################################################
+Harmony.Integration <- function(Seurat.List, Variables.To.Integrate, Project.Path, Figure.Total, Analysis.Name, Genome, Regress.Cell.Cycle, PCA.Feature.List, Resolution.List)
+{
+  cat("Beginning Harmony Integration pipeline for: ", Analysis.Name, "\n")
+  Seurat.List <- lapply(X = Seurat.List, FUN = function(x) {
+    cat("Normalizing Data for sample: ", unique(x$SJID), "\n")
+    x <- NormalizeData(x)
+  })
+  cat("Merging all Seurat Objects into a single Seurat Object\n")
+  Seurat.combined <- merge(Seurat.List[[1]], Seurat.List[c(-1)])
+  cat("Identifying highly variable features\n")
+  Seurat.combined <- FindVariableFeatures(Seurat.combined, selection.method = "vst", nfeatures = 3000)
+  
+  cat("Assigning Cell-Cycle Scores\n")
+  Seurat.combined <- GenomeSpecificCellCycleScoring(Seurat.combined, Genome)
+  
+  if (Regress.Cell.Cycle == "NO"){
+    cat("Scaling the data\n")
+    Seurat.combined <- ScaleData(Seurat.combined, vars.to.regress = "percent.mito", features = rownames(Seurat.combined))
+  }
+  else if (Regress.Cell.Cycle == "YES"){
+    cat("Regressing out Cell Cycle\n")
+    Seurat.combined <- ScaleData(Seurat.combined, vars.to.regress = c("S.Score", "G2M.Score"), features = rownames(Seurat.combined))
+  }
+  else if (Regress.Cell.Cycle == "DIFF"){
+    cat("Regressing out the difference between the G2M and S phase scores\n")
+    Seurat.combined$CC.Difference <- Seurat.combined$S.Score - Seurat.combined$G2M.Score
+    Seurat.combined <- ScaleData(Seurat.combined, vars.to.regress = "CC.Difference", features = rownames(Seurat.combined))
+  }
+  
+  if (missing(PCA.Feature.List)){
+    cat("Performing linear dimensional reduction on highly variable genes\n")
+    Seurat.combined <- RunPCA(Seurat.combined, features = VariableFeatures(Seurat.combined), verbose = FALSE)
+  }
+  else{
+    cat("Performing linear dimensional reduction on custom gene list\n")
+    Seurat.combined <- RunPCA(Seurat.combined, features = PCA.Feature.List, verbose = FALSE)
+  }
+  
+  cat("Performing Harmony Integration\n")
+  Seurat.combined <- RunHarmony(Seurat.combined, group.by.vars = Variables.To.Integrate, plot_convergence = TRUE)
+  
+  cat("Performing Uniform Manifold Approximation and Projection (UMAP) dimensional reduction technique\n")
+  Seurat.combined <- RunUMAP(Seurat.combined, reduction = "harmony", dims = 1:30)
+  cat("Computing the k.param nearest neighbors for a given dataset\n")
+  Seurat.combined <- FindNeighbors(Seurat.combined, reduction = "harmony", dims = 1:30)
+  
+  dir.create(paste(Project.Path, "/", Analysis.Name, sep = ""))
+  dir.create(paste(Project.Path, "/", Analysis.Name, "/", Analysis.Name, "_", Figure.Total, "_Harmony.Integration/", sep = ""))
+  pdf(file = paste(Project.Path, "/", Analysis.Name, "/", Analysis.Name, "_", Figure.Total, "_Harmony.Integration/", Analysis.Name, "_all_cluster_resolutions.pdf", sep = ""), width = 12, height = 12)
+  
+  
+  if (missing(Resolution.List)){
+    for (res in c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
+    {
+      message("FindClusters is being calculated for resolution:", res)
+      Seurat.combined <- FindClusters(Seurat.combined, resolution = res, algorithm = 4, method = "igraph")
+      print(DimPlot(Seurat.combined, label = TRUE) + ggtitle(paste("Resolution: ", res)))
+    }
+    dev.off()
+    
+    pdf(file = paste(Project.Path, "/", Analysis.Name, "/", Analysis.Name, "_", Figure.Total, "_Harmony.Integration/", Analysis.Name, "_cluster_tree.pdf", sep = ""), width = 60, height = 60)
+    print(clustree(Seurat.combined, prefix = "RNA_snn_res."))
+    print(clustree(Seurat.combined, prefix = "RNA_snn_res.", node_colour = "sc3_stability"))
+    dev.off()
+  }
+  else if (length(Resolution.List) > 1){
+    for (res in Resolution.List)
+    {
+      message("FindClusters is being calculated for resolution:", res)
+      Seurat.combined <- FindClusters(Seurat.combined, resolution = res, algorithm = 4, method = "igraph")
+      print(DimPlot(Seurat.combined, label = TRUE) + ggtitle(paste("Resolution: ", res)) )
+    }
+    dev.off()
+    
+    pdf(file = paste(Project.Path, "/", Analysis.Name, "/", Analysis.Name, "_", Figure.Total, "_Harmony.Integration/", Analysis.Name, "_cluster_tree.pdf", sep = ""), width = 60, height = 60)
+    print(clustree(Seurat.combined, prefix = "RNA_snn_res."))
+    print(clustree(Seurat.combined, prefix = "RNA_snn_res.", node_colour = "sc3_stability"))
+    dev.off()
+  }
+  else if (length(Resolution.List) == 1){
+    for (res in Resolution.List)
+    {
+      message("FindClusters is being calculated for resolution:", res)
+      Seurat.combined <- FindClusters(Seurat.combined, resolution = res, algorithm = 4, method = "igraph")
+      print(DimPlot(Seurat.combined, label = TRUE) + ggtitle(paste("Resolution: ", res)) )
+    }
+    dev.off()
+  }
+  
+  cat("Finishing Harmony Integration pipeline for: ", Analysis.Name, "\n")
+  return(Seurat.combined)
+  cat("Returned Seurat object")
+}
+############################################################################################################
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+############################################################################################################
+# Reading in the data, appending sample metadata and conducting basic filtering
+############################################################################################################
+# Creating a list to contain all Seurat data
+Filtered.Master.Seurat.obj <- list()
+
+for (i in 1:length(Publication_project_metadata$SJID)){
+
+    cat("Beginning to process sample:", Publication_project_metadata$SJID[i], "\n")
+    cat("Reading in data\n")
+    Seurat.data <- Read10X(data.dir = paste0(Publication_project_metadata$CellRanger_locations[i]))
+  
+    cat("Creating SeuratObject\n")
+    Filtered.Master.Seurat.obj[[i]] <- CreateSeuratObject(counts = Seurat.data, min.cells = 10, min.features = 200)
+    
+    cat("Calculating mitochondrial percentage per cell\n")
+    Filtered.Master.Seurat.obj[[i]] <- PercentageFeatureSet(Filtered.Master.Seurat.obj[[i]], pattern = "^MT-", col.name = "percent.mito")
+    
+    Filtered.Master.Seurat.obj[[i]]$log10GenesPerUMI <- log10(Filtered.Master.Seurat.obj[[i]]$nFeature_RNA)/log10(Filtered.Master.Seurat.obj[[i]]$nCount_RNA)
+    
+    cat("Adding metadata to SeuratObject\n")
+    sample.metadata <- rbind(Publication_project_metadata[i, ], Publication_project_metadata[i, ][rep(1, length(Filtered.Master.Seurat.obj[[i]]$nCount_RNA)-1), ])
+    Filtered.Master.Seurat.obj[[i]]@meta.data <- cbind(Filtered.Master.Seurat.obj[[i]]@meta.data, sample.metadata)
+    
+    cat("Generating QC plots for RAW data\n")
+    Generate.QC.Plots(Filtered.Master.Seurat.obj[[i]], results_path, "0", Publication_project_metadata$SJID[i], "QC_Raw_Data")
+    
+    cat("1st Data filter\n")
+    Filtered.Master.Seurat.obj[[i]] <- subset(Filtered.Master.Seurat.obj[[i]], subset = 
+                                                nFeature_RNA >= 300 & 
+                                                nCount_RNA >= 500 & 
+                                                percent.mito <= 5 & percent.mito <= FindOutlierThershold(Filtered.Master.Seurat.obj[[i]]$percent.mito)[2])
+    
+      cat("2nd Data filter +/-3MADs\n")
+     Filtered.Master.Seurat.obj[[i]] <- subset(Filtered.Master.Seurat.obj[[i]], subset = 
+                                                nFeature_RNA >= FindOutlierThershold(Filtered.Master.Seurat.obj[[i]]$nFeature_RNA)[1] &
+                                                nFeature_RNA <= FindOutlierThershold(Filtered.Master.Seurat.obj[[i]]$nFeature_RNA)[2] )
+    
+    cat("Generating QC plots for FILTERED data\n")
+    Generate.QC.Plots(Filtered.Master.Seurat.obj[[i]], results_path, "2", Publication_project_metadata$SJID[i], "QC_Filtered_Data")
+    
+    cat("Processing a single sample and generating clusters\n")
+    Filtered.Master.Seurat.obj[[i]] <- Single.Sample(Filtered.Master.Seurat.obj[[i]], results_path, "3", Publication_project_metadata$SJID[i], "GRCh38", Regress.Cell.Cycle = "NO")
+    Filtered.Master.Seurat.obj[[i]] <- SetIdent(Filtered.Master.Seurat.obj[[i]], value=Filtered.Master.Seurat.obj[[i]]@meta.data$RNA_snn_res.0.4)
+    
+    cat("Generating Differential Expression Data\n")
+      Generate.Differential.Data(Filtered.Master.Seurat.obj[[i]], results_path, "3", Publication_project_metadata$SJID[i], "Single.Sample")
+  
+    cat("Saving final objects\n")
+    saveRDS(Filtered.Master.Seurat.obj[[i]], file = paste(results_path, "/",  Publication_project_metadata$SJID[[i]], "/", Publication_project_metadata$SJID[[i]], "_3_Single.Sample/", Publication_project_metadata$SJID[[i]], "_object.rds", sep = ""))
+    
+    cat("Processing complete for sample:", Publication_project_metadata$SJID[i], "\n")
+  
+}
+rm(Seurat.data)
+saveRDS(Filtered.Master.Seurat.obj, file = paste(results_path, "/Filtered_Master_Seurat_obj.rds", sep = ""))
+```
+
+
+
+
+
+```{r}
+##### I regressed out mitochondrial gene percentage to help improve sc/sn RNA-Seq integration #####
+Seurat.List <- list(Filtered.Master.Seurat.obj)
+PDX_integrated <- Harmony.Integration(Seurat.List, Variables.To.Integrate = c("ID"), results_path, "3", "PDX_integrated", "GRCh38", Regress.Cell.Cycle = "NO")
+PDX_integrated <- SetIdent(PDX_integrated, value = PDX_integrated@meta.data$RNA_snn_res.0.4)
+Generate.QC.Plots(PDX_integrated, results_path, "2", "PDX_integrated", "QC_Filtered_Data")
+PDX_integrated <- Calculate.Cell.Type.Signature(PDX_integrated, results_path, "3", "PDX_integrated", "Harmony.Integration", Publication_NB_cell_type_markers, "GRCh38")
+saveRDS(PDX_integrated, file = paste(results_path, "/PDX_integrated/PDX_integrated_3_Harmony.Integration/PDX_integrated_objects.rds", sep = ""))
+```
+
+
+
+
+
+```{r}
+seu1 = PDX_integrated
+scConf1 = createConfig(PDX_integrated)
+makeShinyFiles(seu1, scConf1, shiny.dir = "PDX_shinyApp/")
+makeShinyApp(shiny.title = "Neuroblastoma Dataset", shiny.footnotes = "Data analyzed by Dr. Cody Ramirez")
+```
+
+
+
+
