@@ -1,0 +1,523 @@
+---
+title: "3D2D Cell Factory Analysis: ERMS"
+author: "Asha Jacob Jannu"
+date: "02/07/2024"
+output: html_document
+---
+
+
+## Load input data and setup environment
+
+```{r}
+# Path to custom R functions for single-cell analysis
+SingleCellFunctions <- "/Programs/Single_Cell_Analysis_Functions.R"
+
+# Load those functions into the current R session
+source(SingleCellFunctions)
+
+# Define working directory containing project data
+full_path <- "rms-3D2D-single-cell-analysis"
+
+# Set working directory so all relative paths resolve from here
+setwd(full_path)
+
+# Directory where downstream analysis results are saved
+results_path <- "/3_analyzed_results"
+
+# Set random seed for reproducibility
+set.seed(1234)
+
+# Load sample metadata from tab-delimited file
+project.metadata <- read.csv(paste(full_path, "/Files/rms-3D2D-metadata.tsv", sep = ""), sep = '\t', header = TRUE)
+
+# Load marker genes for known cell types for cell type annotations
+cell.type.df <- read.csv(paste(full_path, "/cell_type_gene_markers.tsv", sep = ""), sep = '\t', header = TRUE)
+
+# Load reference dataset for reference label transfer
+reference_data <- readRDS("/20210421\ RMS\ harmony.Rds")
+
+```
+
+
+
+## Process single sample: QC, clustering, annotation, and label transfer
+
+```{r}
+############################################################################################################
+# Reading in the data, appending sample metadata and conducting basic filtering
+############################################################################################################
+# Creating a list to contain all Seurat data
+Filtered.Master.Seurat.obj <- list()
+
+for (i in 1:length(project.metadata$ID)){
+
+  cat("Beginning to process sample:", project.metadata$ID[i], "\n")
+  cat("Reading in data\n")
+  
+  # Load 10x Genomics filtered count matrix for sample 'i' using its ID from project.metadata
+  Seurat.data <- Read10X(data.dir = paste(full_path, "/2_cellranger_count/", project.metadata$ID[i], "/outs/filtered_feature_bc_matrix", sep = ""))
+  
+  
+  # Create a Seurat object from raw count matrix
+  #   - min.cells = 10: keep genes expressed in at least 10 cells
+  #   - min.features = 200: keep cells with at least 200 detected genes
+  cat("Creating SeuratObject\n")
+  Filtered.Master.Seurat.obj[[i]] <- CreateSeuratObject(counts = Seurat.data, min.cells = 10, min.features = 200)
+  
+  
+  # Remove human genome prefix ("GRCh38-") from gene names in PDX samples
+  # This standardizes feature names after dual-genome alignment (e.g., human + mouse)
+  # Required to avoid mismatches in downstream steps (e.g., integration, annotation)
+  
+  # Update gene names in raw counts matrix
+  Filtered.Master.Seurat.obj[[i]]@assays$RNA@counts@Dimnames[[1]] <- gsub("GRCh38-", "",
+                                                                      Filtered.Master.Seurat.obj[[i]]@assays$RNA@counts@Dimnames[[1]])
+  # Update gene names in normalized data matrix
+  Filtered.Master.Seurat.obj[[i]]@assays$RNA@data@Dimnames[[1]] <- gsub("GRCh38-", "",
+                                                                        Filtered.Master.Seurat.obj[[i]]@assays$RNA@data@Dimnames[[1]])
+    
+  # Compute percentage of mitochondrial gene expression per cell
+  #   - Uses genes starting with "MT-"
+  #   - Adds a new metadata column "percent.mito" to the Seurat object
+  #   - Later, used as a QC metric to identify low-quality or stressed/dying cells
+    cat("Calculating mitochondrial percentage per cell\n")
+    Filtered.Master.Seurat.obj[[i]] <- PercentageFeatureSet(Filtered.Master.Seurat.obj[[i]], pattern = "^MT-", col.name =
+                                                              "percent.mito")
+    
+  # Compute library complexity per cell as log10(genes detected) / log10(total UMI counts)
+  #   - nFeature_RNA: number of detected genes per cell
+  #   - nCount_RNA: total UMI counts per cell
+  #   - Higher values indicate more complex libraries; lower values indicate potential low-quality cells
+    Filtered.Master.Seurat.obj[[i]]$log10GenesPerUMI <-
+      log10(Filtered.Master.Seurat.obj[[i]]$nFeature_RNA)/log10(Filtered.Master.Seurat.obj[[i]]$nCount_RNA)
+    
+    
+  # Add sample-level metadata to each cell in the Seurat object
+  #   - project.metadata[i, ] contains metadata for the current sample
+  #   - Replicates this row to match the number of cells in the object
+  #   - Ensures one metadata row per cell before merging
+  cat("Adding metadata to SeuratObject\n")
+  sample.metadata <- rbind(project.metadata[i, ], project.metadata[i, ][rep(1, length(Filtered.Master.Seurat.obj[[i]]$nCount_RNA)-1), ])
+  
+  # Append sample metadata to existing Seurat metadata
+  Filtered.Master.Seurat.obj[[i]]@meta.data <- cbind(Filtered.Master.Seurat.obj[[i]]@meta.data, sample.metadata)
+  
+  
+  # Generate QC plots using raw data:
+  #   - Includes metrics such as nFeature_RNA, nCount_RNA, percent.mito
+  #   - Saves plots to results_path under a QC-specific label
+  cat("Generating QC plots for RAW data\n")
+  Generate.QC.Plots(Filtered.Master.Seurat.obj[[i]], results_path, "0", project.metadata$ID[i], "QC_Raw_Data")
+  
+  
+  # Apply initial QC filtering with different thresholds for snRNA-seq vs scRNA-seq
+  # - nFeature_RNA >= 300: remove low-complexity cells (few detected genes)
+  # - nCount_RNA >= 500: remove low-depth cells (low UMI counts)
+  # - percent.mito threshold differs by protocol:
+  #     - snRNA-seq: stricter cutoff (<= 1%) since nuclei have minimal mitochondrial RNA
+  #     - scRNA-seq: relaxed cutoff (<= 10%) due to cytoplasmic mitochondrial RNA presence
+  #     - Also applies dynamic upper threshold using FindOutlierThershold() to remove extreme outliers
+  if (project.metadata$SEQUENCE_TYPE[i] == "snRNA-seq")
+  {
+    cat("1st Data filter\n")
+    Filtered.Master.Seurat.obj[[i]] <- subset(Filtered.Master.Seurat.obj[[i]], subset = 
+                                              nFeature_RNA >= 300 & 
+                                              nCount_RNA >= 500 & 
+                                              percent.mito <= 1 & percent.mito <= FindOutlierThershold(Filtered.Master.Seurat.obj[[i]]$percent.mito)[2])
+  } else
+  
+  {
+    cat("1st Data filter\n")
+    Filtered.Master.Seurat.obj[[i]] <- subset(Filtered.Master.Seurat.obj[[i]], subset = 
+                                              nFeature_RNA >= 300 & 
+                                              nCount_RNA >= 500 & 
+                                              percent.mito <= 10 & percent.mito <= FindOutlierThershold(Filtered.Master.Seurat.obj[[i]]$percent.mito)[2])
+  }
+  
+  
+  # Apply a second QC filter using the +/-3MAD-based outlier range for detected genes
+  #   - Uses nFeature_RNA - number of genes detected per cell
+  #   - Removes cells with unusually low or unusually high gene counts
+  #   - Low-gene outliers may represent poor-quality cells
+  #   - High-gene outliers may represent doublets or multiplets
+  cat("2nd Data filter +/-3MADs\n")
+  Filtered.Master.Seurat.obj[[i]] <- subset(Filtered.Master.Seurat.obj[[i]], subset = 
+                                              nFeature_RNA >= FindOutlierThershold(Filtered.Master.Seurat.obj[[i]]$nFeature_RNA)[1] &
+                                              nFeature_RNA <= FindOutlierThershold(Filtered.Master.Seurat.obj[[i]]$nFeature_RNA)[2] )
+  
+  
+  # Generate QC plots using filtered data
+  cat("Generating QC plots for FILTERED data\n")
+  Generate.QC.Plots(Filtered.Master.Seurat.obj[[i]], results_path, "2", project.metadata$ID[i], "QC_Filtered_Data")
+  
+  
+  # Run the standard single-sample Seurat processing workflow
+  #   - Performs downstream analysis on the filtered sample
+  #   - Includes normalization, variable feature selection, cell-cycle scoring, scaling, dimensionality reduction, and clustering etc.,
+  #   - Generates cluster results at multiple resolutions for later comparison
+  cat("Processing a single sample and generating clusters\n")
+  Filtered.Master.Seurat.obj[[i]] <- Single.Sample(Filtered.Master.Seurat.obj[[i]], results_path, "3", project.metadata$ID[i], "GRCh38", Regress.Cell.Cycle = "NO", Resolution.List = c(0, 0.1, 0.2, 0.3, 0.4, 0.5))
+  
+  
+  # Set active cell identities to clustering results at resolution 0.4
+  Filtered.Master.Seurat.obj[[i]] <- SetIdent(Filtered.Master.Seurat.obj[[i]], value=Filtered.Master.Seurat.obj[[i]]@meta.data$RNA_snn_res.0.4)
+  
+  
+  # Perform differential expression analysis across clusters for the sample
+  #   - Uses current cell identities (clusters) to compare gene expression
+  #   - Identifies marker genes distinguishing each cluster
+  #   - Saves results in marker tables to the specified results directory
+  cat("Generating Differential Expression Data\n")
+  Generate.Differential.Data(Filtered.Master.Seurat.obj[[i]], results_path, "3", project.metadata$ID[i], "Single.Sample")
+  
+  
+  # Generate feature expression plots for user-provided gene lists
+  #   - Visualizes expression of selected marker genes across clusters/cells
+  #   - Uses cell.type.df as input gene list (e.g., known cell type markers)
+  #   - Helps to validate cluster identities based on expected gene expression patterns
+  #   - Saves plots to results directory
+  cat("Generating Feature Plots based on specific gene list provided by requester\n")
+  Generate.Feature.Plots(Filtered.Master.Seurat.obj[[i]], results_path, "3", project.metadata$ID[i], "Single.Sample", cell.type.df, "GRCh38")
+  
+  
+  # Compute cell-type signature scores for automated cluster annotation
+  #   - Uses predefined marker genes (cell.type.df) to score each cell/cluster
+  #   - Facilitates cluster labeling and updates Seurat object with signature scores in metadata
+  cat("Generating Cell Signatures produced for automated cluster labeling\n")
+  Filtered.Master.Seurat.obj[[i]] <- Calculate.Cell.Type.Signature(Filtered.Master.Seurat.obj[[i]], results_path, "3", project.metadata$ID[[i]], "Single.Sample", cell.type.df, "GRCh38")
+  
+  
+  # Prepare query dataset for label transfer using a reference atlas
+  #   - Copies current Seurat object to a query object to avoid modifying original data
+  cat("Using reference data set to conduct label transfer\n")
+  QueryData <- Filtered.Master.Seurat.obj[[i]]
+  
+  # Add "hg19-" prefix to gene names in query data
+  #   - Ensures gene name format matches the reference dataset
+  #   - Required for successful feature matching during anchor finding
+  QueryData@assays$RNA@counts@Dimnames[[1]] <- paste("hg19-", QueryData@assays$RNA@counts@Dimnames[[1]], sep = "")
+  QueryData@assays$RNA@data@Dimnames[[1]] <- paste("hg19-", QueryData@assays$RNA@data@Dimnames[[1]], sep = "")
+  
+  
+  # Identify anchors between reference and query datasets
+  #   - Anchors represent shared biological states across datasets
+  #   - Uses Harmony-reduced reference space for alignment
+  #   - SCT normalization ensures comparable expression scaling
+  anchors <- FindTransferAnchors(reference_data, QueryData, reference.reduction = "harmony", normalization.method = "SCT")
+  
+  
+  # Transfer cell-type labels from reference to query cells using computed anchors
+  #   - reference_data$annot.clusters2: reference cluster/cell-type annotations
+  #   - uses first 30 PCs for mapping
+  #   - Returns predicted labels and associated prediction scores for each cell
+  cat("Tranferring reference predictions\n")
+  predictions <- TransferData(anchors, refdata = reference_data$annot.clusters2, dims = 1:30)
+  
+  # Add predicted labels and scores  from reference dataset to Seurat object metadata
+  Filtered.Master.Seurat.obj[[i]] <- AddMetaData(object = Filtered.Master.Seurat.obj[[i]], metadata = predictions)
+
+  
+  
+  # Save reference-based annotation results to a PDF report
+  #   - UMAP: visualize transferred labels in "predicted.id" column of metadata in Seurat Object
+  #   - Bar plot: summarize number of cells assigned to each predicted label
+  #   - Output is written to the sample-specific results directory
+  pdf(file = paste(results_path, "/", project.metadata$ID[i], "/", project.metadata$ID[i], "_3_Single.Sample/", project.metadata$ID[i], "_reference_label_transfer_predictions.pdf", sep = ""), )
+  
+  # Plot UMAP colored by transferred reference labels
+  print(DimPlot(Filtered.Master.Seurat.obj[[i]], reduction = "umap", group.by = "predicted.id", label = TRUE, label.size = 3, repel = TRUE))
+  
+  # Plot cell counts for each transferred label
+  print(ggplot(data = data.frame(table(Filtered.Master.Seurat.obj[[i]]$predicted.id)), aes(x = Var1, y = Freq)) + geom_bar(stat = "identity") + geom_text(aes(label = Freq)))
+  dev.off()
+  
+  
+  # Save processed Seurat object to disk for downstream reuse
+  #   - Stores full object (data, metadata, embeddings, clusters, predictions)
+  saveRDS(Filtered.Master.Seurat.obj[[i]], file = paste(results_path, "/",  project.metadata$ID[[i]], "/", project.metadata$ID[[i]], "_3_Single.Sample/", project.metadata$ID[[i]], "_object.rds", sep = ""))
+  
+  
+  # End of per-sample processing loop
+  cat("Processing complete for sample:", project.metadata$ID[i], "\n")
+  
+}
+
+# Remove intermediate objects to free memory
+rm(Seurat.data, sample.metadata, QueryData, anchors, predictions)
+
+
+# Save the full list of processed Seurat objects across all samples
+saveRDS(Filtered.Master.Seurat.obj, file = paste(results_path, "/Filtered_Master_Seurat_obj.rds", sep = ""))
+```
+
+
+
+# Integrate ERMS dataset individually
+
+```{r}
+# Load previously processed Seurat objects (all samples)
+Filtered.Master.Seurat.obj <- readRDS(file = paste(results_path, "/Filtered_Master_Seurat_obj.rds", sep = ""))
+
+
+# Perform Harmony-based integration on selected samples (1-4) by not regressing cell-cycle effects
+#   - Corrects batch effects across samples using "ID" as batch variable
+#   - Produces a unified integrated object for joint analysis
+All_integrated <- Harmony.Integration(Filtered.Master.Seurat.obj[1:4], c("ID"), results_path, "3", "All_integrated", "GRCh38", Regress.Cell.Cycle = "NO") 
+
+
+# Set cluster identities based on resolution 0.4 from integrated analysis
+All_integrated <- SetIdent(All_integrated, value = All_integrated@meta.data$RNA_snn_res.0.4)
+
+
+# Generate QC plots on filtered, integrated dataset
+#   - Visualizes post-integration quality metrics and clustering structure
+Generate.QC.Plots(All_integrated, results_path, "2", "All_integrated", "QC_Filtered_Data")
+
+
+# Compute cell-type signature scores on integrated object
+#   - Enables cluster annotation using marker gene enrichment
+All_integrated <- Calculate.Cell.Type.Signature(All_integrated, results_path, "3", "All_integrated", "Harmony.Integration", cell.type.df, "GRCh38")
+
+
+# Save integrated Seurat object for downstream analysis
+saveRDS(All_integrated, file = paste(results_path, "/All_integrated_obj.rds", sep = ""))
+
+
+# Prepare query dataset for label transfer using a reference atlas
+#   - Copies current Seurat object to a query object to avoid modifying original data
+QueryData <- All_integrated
+
+
+# Add "hg19-" prefix to gene names in query data
+#   - Ensures gene name format matches the reference dataset
+#   - Required for successful feature matching during anchor finding
+QueryData@assays$RNA@counts@Dimnames[[1]] <- paste("hg19-", QueryData@assays$RNA@counts@Dimnames[[1]], sep = "")
+QueryData@assays$RNA@data@Dimnames[[1]] <- paste("hg19-", QueryData@assays$RNA@data@Dimnames[[1]], sep = "")
+
+
+# Identify anchors between reference and query datasets
+#   - Anchors represent shared biological states across datasets
+#   - Uses Harmony-reduced reference space for alignment
+#   - SCT normalization ensures comparable expression scaling
+anchors <- FindTransferAnchors(reference_data, QueryData, reference.reduction = "harmony", normalization.method = "SCT")
+
+# Transfer cell-type labels from reference to query cells using computed anchors
+#   - refdata = reference_data$annot.clusters2: reference cluster/cell-type annotations
+#   - dims = 1:30: use first 30 PCs for mapping
+#   - Returns predicted labels and associated prediction scores for each cell
+predictions <- TransferData(anchors, refdata = reference_data$annot.clusters2, dims = 1:30)
+
+
+# Add predicted labels and scores  from reference dataset to Seurat object metadata
+All_integrated <- AddMetaData(object = All_integrated, metadata = predictions)
+
+
+# Save reference-based annotation results to a PDF report
+#   - UMAP: visualize transferred labels in "predicted.id" column of metadata in Seurat Object
+#   - Bar plot: summarize number of cells assigned to each predicted label
+#   - Output is written to the sample-specific results directory
+pdf(file = paste(results_path, "/All_integrated/All_integrated_3_Harmony.Integration/All_integrated_reference_label_transfer_predictions.pdf", sep = ""), )
+
+# Plot UMAP colored by transferred reference labels
+print(DimPlot(All_integrated, reduction = "umap", group.by = "predicted.id", label = TRUE, label.size = 3, repel = TRUE))
+
+# Plot cell counts for each transferred label
+print(ggplot(data = data.frame(table(All_integrated$predicted.id)), aes(x = Var1, y = Freq)) + geom_bar(stat = "identity") + geom_text(aes(label = Freq)))
+dev.off()
+
+
+# Save processed Seurat object to disk for downstream reuse
+saveRDS(All_integrated, file = paste(results_path, "/All_integrated/All_integrated_3_Harmony.Integration/All_integrated_objects.rds", sep = ""))
+```
+
+
+## Mouse and Immune/blood contamination identification and removal
+
+```{r}
+# Perform differential expression analysis across clusters for the sample
+#   - Uses current cell identities (clusters) to compare groups
+#   - Identifies marker genes distinguishing each cluster
+#   - Saves results in marker tables to the specified results directory
+Generate.Differential.Data(All_integrated, results_path, "3", "All_integrated", "Harmony.Integration")
+
+
+# DE analysis identified cluster 9 at RNA_snn_res.0.4 is abundant in mouse genes
+# Therefore, cluster 9 is removed
+clusters_to_remove <- 9
+All_integrated <- subset(All_integrated, idents = clusters_to_remove, invert = TRUE)
+
+
+
+# Annotate cells using SingleR to detect immune/blood populations
+# that are not relevant to the study and should be removed later
+
+# Load SingleR reference database
+#   - HumanPrimaryCellAtlasData: broad primary human cell types
+#   - DatabaseImmuneCellExpressionData: immune-focused reference
+ref.data=celldex::DatabaseImmuneCellExpressionData(ensembl=FALSE) #ImmuneDB
+
+
+# Extract raw count matrix from the integrated Seurat object
+# SingleR uses expression data from the test dataset to assign labels
+All_counts=GetAssayData(All_integrated, layer ="counts")
+
+
+# Run SingleR annotation
+#   - test: query expression matrix
+#   - ref: reference dataset
+#   - labels: main cell type labels from reference
+All.SR.annot=SingleR(test=All_counts, ref=ref.data, labels=ref.data$label.main)
+
+
+# Add SingleR predicted cell type labels to Seurat metadata
+#   - Matches cells in Seurat metadata to rows in SingleR output
+All_integrated$SingleR.celltype.annot=All.SR.annot[match(rownames(All_integrated@meta.data), rownames(All.SR.annot)), 'labels']
+
+
+# Save UMAP colored by SingleR-assigned cell type labels
+# Helps identify clusters corresponding to immune/blood cells
+png(filename= "3_analyzed_results/All_integrated/All.SingleR.annot.png", width = 2500, height = 1400, res = 300)
+DimPlot(All_integrated, reduction = 'umap', group.by='SingleR.celltype.annot', label=TRUE, label.size = 3)
+dev.off()
+
+
+# Remove cluster/s identified as immune or blood contamination
+# cluster 11 was selected for removal based on annotation results
+clusters_to_remove <- 11
+All_integrated <- subset(All_integrated, idents = clusters_to_remove, invert = TRUE)
+```
+
+
+## Re-integrate and recluster after removing unwanted clusters
+
+```{r}
+# Re-integrate and recluster dataset after removing unwanted clusters
+#   - Split integrated object back into per-sample objects using "ID"
+#   - Required because Harmony integration expects a list of individual samples
+All.obj.list <- SplitObject(All_integrated, split.by = "ID")
+
+# Re-run Harmony integration to correct batch effects after contamination removal
+# - Ensures embeddings and clustering reflect updated cell population
+All_integrated <- Harmony.Integration(All.obj.list, c("ID"), results_path, "3", "All_integrated", "GRCh38", Regress.Cell.Cycle = "NO")
+
+# Set cluster identities using resolution 0.4 from re-clustered data
+All_integrated <- SetIdent(All_integrated, value = All_integrated@meta.data$RNA_snn_res.0.4)
+
+# Generate QC plots for the re-integrated dataset
+#   - Confirms clustering structure and QC metrics after filtering
+Generate.QC.Plots(All_integrated, results_path, "2", "All_integrated", "QC_Filtered_Data")
+
+# Recompute cell-type signature scores after reclustering
+# This Updates annotation based on new cluster structure
+All_integrated <- Calculate.Cell.Type.Signature(All_integrated, results_path, "3", "All_integrated", "Harmony.Integration", cell.type.df, "GRCh38")
+# saveRDS(All_integrated, file = paste(results_path, "/All_integrated_obj.rds", sep = ""))
+
+
+
+# Prepare query dataset for label transfer using a reference atlas
+#   - Copies current Seurat object to a query object to avoid modifying original data
+QueryData <- All_integrated
+
+
+# Add "hg19-" prefix to gene names in query data
+#   - Ensures gene name format matches the reference dataset
+#   - Required for successful feature matching during anchor finding
+QueryData@assays$RNA@counts@Dimnames[[1]] <- paste("hg19-", QueryData@assays$RNA@counts@Dimnames[[1]], sep = "")
+QueryData@assays$RNA@data@Dimnames[[1]] <- paste("hg19-", QueryData@assays$RNA@data@Dimnames[[1]], sep = "")
+
+
+# Identify anchors between reference and query datasets
+#   - Anchors represent shared biological states across datasets
+#   - Uses Harmony-reduced reference space for alignment
+#   - SCT normalization ensures comparable expression scaling
+anchors <- FindTransferAnchors(reference_data, QueryData, reference.reduction = "harmony", normalization.method = "SCT")
+
+
+# Transfer cell-type labels from reference to query cells using computed anchors
+#   - refdata = reference_data$annot.clusters2: reference cluster/cell-type annotations
+#   - dims = 1:30: use first 30 PCs for mapping
+#   - Returns predicted labels and associated prediction scores for each cell
+predictions <- TransferData(anchors, refdata = reference_data$annot.clusters2, dims = 1:30)
+
+
+# Add predicted labels and scores  from reference dataset to Seurat object metadata
+All_integrated <- AddMetaData(object = All_integrated, metadata = predictions)
+
+
+# Save reference-based annotation results to a PDF report
+#   - UMAP: visualize transferred labels in "predicted.id" column of metadata in Seurat Object
+#   - Bar plot: summarize number of cells assigned to each predicted label
+#   - Output is written to the sample-specific results directory
+pdf(file = paste(results_path, "/All_integrated/All_integrated_3_Harmony.Integration/All_integrated_reference_label_transfer_predictions.clean.pdf", sep = ""), )
+
+# Plot UMAP colored by transferred reference labels
+print(DimPlot(All_integrated, reduction = "umap", group.by = "predicted.id", label = TRUE, label.size = 3, repel = TRUE))
+
+# Plot cell counts for each transferred label
+print(ggplot(data = data.frame(table(All_integrated$predicted.id)), aes(x = Var1, y = Freq)) + geom_bar(stat = "identity") + geom_text(aes(label = Freq)))
+dev.off()
+
+
+# Save processed Seurat object for downstream reuse
+saveRDS(All_integrated, file = paste(results_path, "/All_integrated/All_integrated_3_Harmony.Integration/All_integrated_objects_clean.rds", sep = ""))
+```
+
+
+
+## Generate ShinyCell files for Rshiny app
+
+```{r}
+
+# Assign custom colors to cell types
+cell.types <- c("Myoblast", "Myocyte", "Mesoderm")
+colors <- c("#ffbc62", "#9fdd89","#11bcf5")
+cell_type_colors <- setNames(colors, cell.types)
+
+
+# Generate an interactive ShinyCell app for exploring the integrated dataset
+# Uses the final integrated Seurat object as input
+seu1 = All_integrated
+
+
+# Create default ShinyCell configuration from the Seurat object
+scConf1 = createConfig(All_integrated)
+
+
+# Apply custom colors to predicted cell-type signature labels
+scConf1 = modColours(scConf1, meta.to.mod = "predicted.cell.signature.ident", new.colours = cell_type_colors)
+
+
+# Build the ShinyCell app and save it to the specified output directory
+makeShinyApp(seu1, scConf1, shiny.title = "3D2D Analysis - SJRHB013758 cohort", shiny.footnotes = "Dr.Justina McEvoy's project", shiny.dir = paste(results_path, "/All_integrated/All_integrated_3_Harmony.Integration/shinyApp/", sep = ""))
+
+```
+
+
+
+## Generate proportion plots per sample type in ERMS dataset
+
+```{r}
+# Generate ordered stacked bar plots showing cell-type proportions
+#   - Computes cell-type composition across groups
+#   - Visualizes proportions of each cell type per sample type
+
+# Distribution of cell types within Patient sample
+Generate.Proportion.Plots(Meta.Data = All_integrated@meta.data, Project.Path = "/3_analyzed_results/All_integrated/All_integrated_3_Harmony.Integration/", Sample.Type = "Patient")
+
+# Distribution of cell types within PDX sample
+Generate.Proportion.Plots(Meta.Data = All_integrated@meta.data, Project.Path = "/3_analyzed_results/All_integrated/All_integrated_3_Harmony.Integration/", Sample.Type = "PDX")
+
+# Distribution of cell types within 3D sample
+Generate.Proportion.Plots(Meta.Data = All_integrated@meta.data, Project.Path = "/3_analyzed_results/All_integrated/All_integrated_3_Harmony.Integration/", Sample.Type = "3D")
+
+# Distribution of cell types within 2D sample
+Generate.Proportion.Plots(Meta.Data = All_integrated@meta.data, Project.Path = "/3_analyzed_results/All_integrated/All_integrated_3_Harmony.Integration/", Sample.Type = "2D")
+```
+
+
+## Tabulated cell counts from proportion plots
+
+```{r}
+# Generate cell counts per predicted cell type from proportion plot data for all sample types - Patient, PDX, 3D and 2D
+CellTypeCounts.from.ProportionPlots(All_integrated@meta.data, "/3_analyzed_results/All_integrated/All_integrated_3_Harmony.Integration/")
+```

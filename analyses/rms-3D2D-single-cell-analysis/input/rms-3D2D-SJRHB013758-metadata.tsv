@@ -1,0 +1,5 @@
+SJUID	SAMPLE_TYPE	CONDITION	SEQUENCE_TYPE	PLATFORM	RUN_TYPE	READ_LENGTH	ADAPTERS_USED	REFERENCE_GENOME
+SJRHB013758_D2	Patient	ERMS	snRNA-seq	Illumina Hiseq	Paired	100 bps	Multiplexing	Human
+SJRHB013758_X2	PDX	ERMS	scRNA-seq	Illumina Hiseq	Paired	100 bps	Multiplexing	Human
+SJRHB013758_C2	3D	ERMS	scRNA-seq	Illumina Hiseq	Paired	101 bps	Multiplexing	Human
+SJRHB013758_C4	2D	ERMS	scRNA-seq	Illumina Hiseq	Paired	102 bps	Multiplexing	Human
