@@ -82,16 +82,15 @@ resolution_find_markers: "default_multiple" # "custom_multiple", "default_multip
 
 #######################################################################################################################################
 # rshiny-app-all-cancer-cohorts
-metadata_list_path: "./McEvoy_etal_3D2D/data/input"
+metadata_list_path_module: "./McEvoy_etal_3D2D/data/input"
 metadata_list: "metadata-list.tsv"
 
 # data_dir for `01-generate-rshiny-app.R`
 # Available upon request
-ews_dir: "./Addendum_3D2D_Ewing_sarcoma/sc-rna-seq-snap-Addendum-3D2D-EWS-integrated/analyses/cell-types-annotation/results/cell_types_annotations_all/"
-neuroblastoma_dir: "./Addendum_3D2D_Neuroblastoma/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-integrated/analyses/cell-types-annotation/results/cell_types_annotations_all/"
-os_dir: "./Addendum_3D2D_Osteosarcoma/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-integrated/analyses/cell-types-annotation/results/cell_types_annotations_all/"
-rhabdo_dir: "./Addendum_3D2D_Rhabdomyosarcoma/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-integrated/analyses/cell-types-annotation/results/cell_types_annotations_all/"
-
+EWS_data_dir_app_all: "./Addendum_3D2D/Addendum_3D2D_cancer_cohorts/Addendum_3D2D_Ewing_sarcoma/sc-rna-seq-snap-Addendum-3D2D-EWS-integrated/analyses/cell-types-annotation/results/cell_types_annotations_all" 
+NB_data_dir_app_all: "./Addendum_3D2D/Addendum_3D2D_cancer_cohorts/Addendum_3D2D_Neuroblastoma/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-integrated/analyses/cell-types-annotation/results/cell_types_annotations_all" 
+OS_data_dir_app_all: "./Addendum_3D2D/Addendum_3D2D_cancer_cohorts/Addendum_3D2D_Osteosarcoma/sc-rna-seq-snap-Addendum-3D2D-Osteosarcoma-dual-genome/analyses/cell-types-annotation/results/cell_types_annotations_all" 
+RMS_data_dir_app_all: "./Addendum_3D2D/Addendum_3D2D_cancer_cohorts/Addendum_3D2D_Rhabdomyosarcoma/sc-rna-seq-snap-Addendum-3D2D-Rhabdomyosarcoma-integrated/analyses/cell-types-annotation/results/cell_types_annotations_all" 
 
 
 

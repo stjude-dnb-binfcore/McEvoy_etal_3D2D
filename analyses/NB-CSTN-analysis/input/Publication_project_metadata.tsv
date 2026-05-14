@@ -1,0 +1,8 @@
+DYE_ID	Sample_type	Method	SJID	MYCN	ALK	Timepoint	Sample	Treatment_Status	anti-GD2
+DYE4556	O-PDX	nucleus	SJNBL012407_X1	amplified	wild type	diagnostic	primary	chemotherapy	No
+DYE4557	O-PDX	nucleus	SJNBL015724_X1	non-amplified	wild type	diagnostic	primary	chemoimmunotherapy	Yes
+DYE4558	O-PDX	nucleus	SJNBL030513_X1	non-amplified	"mutant, F1245C"	diagnostic	primary	chemoimmunotherapy	Yes
+DYE4559	O-PDX	nucleus	SJNBL030721_X1	amplified	"mutant, R1275Q"	diagnostic	primary	chemoimmunotherapy	Yes
+DYE2577	O-PDX	cell	SJNBL031239_X1	amplified	"mutant, F1174C"	diagnostic	primary	chemotherapy	No
+DYE2340	O-PDX	cell	SJNBL046_X	amplified	wild type	diagnostic	primary	chemotherapy	No
+DYE4555	O-PDX	nucleus	SJNBL063821_X1	non-amplified	wild type	diagnostic	primary	untreated	NA
