@@ -33,7 +33,7 @@ McEvoy et al., Next-Generation Pediatric Cancer Models: Patient-Matched Orthotop
 
 ## Code Authors
 
-Asha Jacob Jannu, PhD ([@ashajacob29](https://github.com/ashajacob29))
+Asha Jacob Jannu, MSc ([@ashajacobjannu](https://github.com/ashajacobjannu))
 
 Cody A. Ramirez, PhD ([@CodyRamirez](https://github.com/CodyRamirez))
 

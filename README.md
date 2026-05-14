@@ -72,7 +72,7 @@ Vulnerabilities in Pediatric Solid Tumors (in prep.).
 
 Antonia Chroni, PhD ([@AntoniaChroni](https://github.com/AntoniaChroni))
 
-Asha Jacob Jannu, PhD ([@ashajacob29](https://github.com/ashajacob29))
+Asha Jacob Jannu, MSc ([@ashajacobjannu](https://github.com/ashajacobjannu))
 
 Cody A. Ramirez, PhD ([@CodyRamirez](https://github.com/CodyRamirez))
 
