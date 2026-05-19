@@ -83,9 +83,8 @@ resolution_find_markers: "default_multiple" # "custom_multiple", "default_multip
 #######################################################################################################################################
 # rshiny-app-all-cancer-cohorts
 metadata_list_path_module: "./McEvoy_etal_3D2D/data/input"
-metadata_list: "metadata-list.tsv"
+metadata_list_module: "metadata-list-cell-types.tsv"
 
-# data_dir for `01-generate-rshiny-app.R`
 # Available upon request
 EWS_data_dir_app_all: "./Addendum_3D2D/Addendum_3D2D_cancer_cohorts/Addendum_3D2D_Ewing_sarcoma/sc-rna-seq-snap-Addendum-3D2D-EWS-integrated/analyses/cell-types-annotation/results/cell_types_annotations_all" 
 NB_data_dir_app_all: "./Addendum_3D2D/Addendum_3D2D_cancer_cohorts/Addendum_3D2D_Neuroblastoma/sc-rna-seq-snap-Addendum-3D2D-Neuroblastoma-integrated/analyses/cell-types-annotation/results/cell_types_annotations_all" 
