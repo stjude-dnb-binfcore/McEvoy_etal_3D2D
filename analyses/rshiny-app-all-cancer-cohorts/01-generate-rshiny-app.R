@@ -46,18 +46,17 @@ annotations_dir <- yaml$annotations_dir_rshiny_app
 annotations_filename <- yaml$annotations_filename_rshiny_app
 reduction_value <- yaml$reduction_value_annotation_module
 metadata_list_path <- yaml$metadata_list_path_module
+metadata_list <- yaml$metadata_list_module
 
 # Set up directories and paths to root_dir and analysis_dir
 analysis_dir <- file.path(root_dir, "analyses") 
 module_dir <- file.path(analysis_dir, "rshiny-app-all-cancer-cohorts") 
-#input_dir <- file.path(metadata_list_path) 
 
 # Input files
-input_file <- file.path(metadata_list_path, "metadata-list.tsv")
-
+input_file <- file.path(metadata_list_path, metadata_list)
 
 ########################################################################################################################
-# cancer cohort objects
+# cancer cohort objects dir
 ews_dir <- yaml$EWS_data_dir_app_all
 ews_dir 
 
@@ -69,8 +68,8 @@ os_dir
 
 rhabdo_dir <- yaml$RMS_data_dir_app_all
 rhabdo_dir
-########################################################################################################################
 
+########################################################################################################################
 # Create results_dir
 results_dir <- file.path(module_dir, "results")
 if (!dir.exists(results_dir)) {
@@ -165,7 +164,45 @@ for (i in seq_along(cancer_names)) {
   # Create shiny config
   cat("Beginning to process R Shiny for", cancer, "\n")
   #scConf1 <- createConfig(seu1[[cancer]])
+
+  # ------------------------------------------------------------------
+  # Set NAs as malignant for "2D", "3D", "CCLF_cells", "PDX"
+  # ------------------------------------------------------------------
+  #Annotated Clusters
+  if ("Annotated Clusters" %in% colnames(seu1[[cancer]]@meta.data)) {
+    
+    cat("Annotated Clusters column exists for:", cancer, "\n")
+    
+    # Convert to factor with alphabetically sorted levels
+    seu1[[cancer]]@meta.data$`Annotated Clusters` <- factor(seu1[[cancer]]@meta.data$`Annotated Clusters`,
+                                                            levels = sort(unique(seu1[[cancer]]@meta.data$`Annotated Clusters`)))
+    
+    print(table(seu1[[cancer]]@meta.data$Model,
+                seu1[[cancer]]@meta.data$`Annotated Clusters`,
+                useNA = "ifany"))
+    
+    # Convert factor → character FIRST
+    seu1[[cancer]]@meta.data$`Annotated Clusters` <- as.character(seu1[[cancer]]@meta.data$`Annotated Clusters`)
+    
+    Model_to_annotate <- c("2D", "3D", "CCLF_cells", "PDX")
+    
+    seu1[[cancer]]@meta.data$`Annotated Clusters` <- ifelse(
+      seu1[[cancer]]@meta.data$Model %in% Model_to_annotate &
+        is.na(seu1[[cancer]]@meta.data$`Annotated Clusters`),
+      "malignant",
+      seu1[[cancer]]@meta.data$`Annotated Clusters`
+    )
+    
+    print(table(seu1[[cancer]]@meta.data$Model,
+                seu1[[cancer]]@meta.data$`Annotated Clusters`,
+                useNA = "ifany"))
+  } else {
+    cat("Annotated Clusters column does NOT exist for:", cancer, "\n")
+    
+  }    
   
+ 
+  # ------------------------------------------------------------------
   # Metadata columns can be dropped is if they have more than 50 different possible values for the column. 
   # This cutoff is set in the createConfig step by the maxLevels parameter. 
   # https://rdrr.io/github/SGDDNB/ShinyCell/man/createConfig.html
@@ -201,7 +238,5 @@ makeShinyCodesMulti(#shiny.title = PROJECT_NAME,
   shiny.headers = shiny_headers,
   shiny.dir = file.path(shiny_dir))
 cat("Complete R Shiny for all datasets", "\n")
-
-
-
+###################### ###################### ###################### ###################### ######################
 

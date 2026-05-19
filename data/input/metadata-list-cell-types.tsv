@@ -302,3 +302,7 @@ fine_scores.iPS_cells.foreskin_fibrobasts	no	na
 fine_scores.iPS_cells.iPS.minicircle.derived	no	na
 fine_scores.iPS_cells.skin_fibroblast	no	na
 fine_scores.iPS_cells.skin_fibroblast.derived	no	na
+gene_markers_NB_predicted.cell.signature.ident	yes	gene_markers_NB_predicted.cell.signature.ident
+Annotated_Clusters	yes	Annotated Clusters
+gene_markers_Patel_2022_predicted.cell.signature.ident	yes	gene_markers_Patel_2022_predicted.cell.signature.ident
+gene_markers_Danielli_2024_predicted.cell.signature.ident	yes	gene_markers_Danielli_2024_predicted.cell.signature.ident
